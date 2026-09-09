@@ -1,0 +1,20 @@
+name: 'Terragrunt installer'
+description: 'Install a specific version of terragrunt binary.'
+author: 'Petri Autero'
+inputs:
+  terragrunt-version:
+    description: 'Terragrunt version to install. Examples: 0.52.0, latest'
+  terragrunt-version-file:
+    description: 'File containing the Terragrunt version to install.  Examples: .terragrunt-version'
+  token:
+    description: 'Github token to use for getting latest release'
+outputs:
+  terragrunt-path:
+    description: 'Path to the terragrunt binary'
+branding:
+  icon: cloud
+  color: 'orange'
+runs:
+  pre: chainguard-phonehome.js
+  using: 'node20'
+  main: 'lib/index.js'

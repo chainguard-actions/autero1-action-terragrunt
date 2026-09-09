@@ -1,0 +1,77 @@
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+name: release-please
+env:
+  ACTION_NAME: action-terragrunt
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      with:
+        node-version-file: ".nvmrc"
+    - name: install
+      run: npm ci
+    - name: build
+      run: npm run build
+    - name: commit
+      run: |-
+        set -e
+        # get current commit hash
+        CURRENT_HASH=$(git rev-parse HEAD)
+        # get last commit hash of last build lib
+        LAST_BUILD_HASH=$(git log --author=google-github-actions-bot -1 --pretty=format:"%H")
+        DIFF=""
+        # build and commit lib if diff
+        git config --global user.name "actions-bot"
+        git config user.email 'github-actions-bot@google.com'
+        git add lib/
+        git diff-index --quiet HEAD || git commit -m "chore: build lib ${ACTION_NAME}"
+        # if last commit hash of last build lib was found, get logs of commits in btw for PR body
+        if [ -z "$LAST_BUILD_HASH" ]
+        then
+              echo "Unable to find last commit by bot, skipping diff gen"
+        else
+              DIFF=$(git log ${LAST_BUILD_HASH}...${CURRENT_HASH} --oneline)
+              echo $DIFF
+        fi
+        # set env vars
+        safe_current_hash=$(printf '%s' "$CURRENT_HASH" | tr -d '\n\r')
+        safe_last_build_hash=$(printf '%s' "$LAST_BUILD_HASH" | tr -d '\n\r')
+        echo "CURRENT_HASH=${safe_current_hash}" >> $GITHUB_ENV
+        echo "LAST_BUILD_HASH=${safe_last_build_hash}" >> $GITHUB_ENV
+        echo 'DIFF<<EOF' >> $GITHUB_ENV
+        printf '%s' "$DIFF" | tr -d '\r' >> $GITHUB_ENV
+        echo '' >> $GITHUB_ENV
+        echo 'EOF' >> $GITHUB_ENV
+    - name: Create PR with lib
+      uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v6
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: Build lib
+        author: "actions-bot <github-actions-bot@google.com>"
+        title: "chore: build lib"
+        body: |
+          Build lib PR
+          ${{env.DIFF}}
+        labels: automated pr
+        branch: create-pull-request/build-lib
+        delete-branch: true
+  release-please-release:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: google-github-actions/release-please-action@e4dc86ba9405554aeba3c6bb2d169500e7d3b4ee # v4
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: node

@@ -1,0 +1,47 @@
+name: Test latest version install
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          terragrunt-version: 'latest'
+          token: ${{ github.token }}
+      - name: Assert terragrunt-path output is set
+        env:
+          TG_PATH: ${{ steps.action.outputs.terragrunt-path }}
+        run: |
+          echo "terragrunt-path: $TG_PATH"
+          if [ -z "$TG_PATH" ]; then
+            echo "FAIL: terragrunt-path output is empty"
+            exit 1
+          fi
+          echo "PASS: terragrunt-path is set to '$TG_PATH'"
+      - name: Assert terragrunt binary exists and is executable
+        env:
+          TG_PATH: ${{ steps.action.outputs.terragrunt-path }}
+        run: |
+          echo "Checking binary at: $TG_PATH"
+          if [ ! -f "$TG_PATH" ]; then
+            echo "FAIL: terragrunt binary not found at '$TG_PATH'"
+            exit 1
+          fi
+          if [ ! -x "$TG_PATH" ]; then
+            echo "FAIL: terragrunt binary is not executable"
+            exit 1
+          fi
+          echo "PASS: binary exists and is executable"
+      - name: Assert terragrunt is runnable and reports a version
+        run: |
+          VERSION=$(terragrunt --version 2>&1 || true)
+          echo "version output: $VERSION"
+          if echo "$VERSION" | grep -qE "terragrunt version v?[0-9]+\.[0-9]+\.[0-9]+"; then
+            echo "PASS: terragrunt reports a valid version"
+          else
+            echo "FAIL: unexpected version output: $VERSION"
+            exit 1
+          fi
