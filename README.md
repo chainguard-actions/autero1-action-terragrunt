@@ -6,9 +6,9 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 ## Versions
 
-| Version | Tag | Upstream commit |
-|---------|-----|-----------------|
-| v3.0.2 | [`v3.0.2`](https://github.com/chainguard-actions/autero1-action-terragrunt/tree/v3.0.2) | [`aefb0a4`](https://github.com/autero1/action-terragrunt/commit/aefb0a43c4f5503a91fefb307745c4d51c26ed0e) |
+| Version | Tag | Upstream commit | Hardening report |
+|---------|-----|-----------------|------------------|
+| v3.0.2 | [`v3.0.2`](https://github.com/chainguard-actions/autero1-action-terragrunt/tree/v3.0.2) | [`aefb0a4`](https://github.com/autero1/action-terragrunt/commit/aefb0a43c4f5503a91fefb307745c4d51c26ed0e) | [`HARDENING.md`](https://github.com/chainguard-actions/autero1-action-terragrunt/blob/v3.0.2/HARDENING.md) |
 
 ## Privacy
 
